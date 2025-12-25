@@ -156,9 +156,20 @@ async function validateYAML() {
         const data = await response.json();
         
         if (data.success) {
-            showStatus('✓ ' + data.message, 'success');
+            let message = '✓ ' + data.message;
+            if (data.warnings && data.warnings.length > 0) {
+                message += '\n\n⚠️  Warnings:\n' + data.warnings.map(w => '  • ' + w).join('\n');
+            }
+            showStatus(message, 'success');
         } else {
-            showStatus('✗ ' + data.error, 'error');
+            let errorMsg = '✗ ' + data.error;
+            if (data.errors && data.errors.length > 0) {
+                errorMsg = '✗ Validation Failed\n\nErrors:\n' + data.errors.map(e => '  • ' + e).join('\n');
+                if (data.warnings && data.warnings.length > 0) {
+                    errorMsg += '\n\nWarnings:\n' + data.warnings.map(w => '  • ' + w).join('\n');
+                }
+            }
+            showStatus(errorMsg, 'error');
         }
     } catch (error) {
         showStatus('Error validating: ' + error.message, 'error');

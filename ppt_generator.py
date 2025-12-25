@@ -17,12 +17,18 @@ import re
 LAYOUT_MAP = {
     'title_white': 0,
     'title_reverse': 1,
+    'title': 0,  # Alias for title_white
+    'TITLE': 0,  # Alias for title_white
     'divider': 6,
     'text_only': 8,
     'title_only': 12,
     'text_content': 21,
     'two_column': 23,
+    'two_content': 23,  # Alias
+    'TWO_CONTENT': 23,  # Alias
     'three_column': 24,
+    'three_content': 24,  # Alias
+    'THREE_CONTENT': 24,  # Alias
     'quote': 34,
     'end_slide': 35
 }
@@ -113,11 +119,138 @@ class HyFluxPPTGenerator:
                     current_paragraph.text = cleaned_line
                     current_paragraph.level = 0
     
+    def _normalize_content(self, spec):
+        """Normalize YAML content before PPT generation.
+        
+        Rules:
+        - Every bullet line starts with •
+        - No headings without bullets inside text_only
+        - No blank lines inside bullet blocks
+        - Section labels are written as bullet text (e.g. • Core pack:)
+        - No reliance on formatting semantics the renderer doesn't support
+        """
+        for slide in spec.get('slides', []):
+            slide_type = slide.get('type', '')
+            
+            # Normalize text_only content
+            if slide_type == 'text_only' and 'content' in slide:
+                content = slide['content']
+                if isinstance(content, str):
+                    slide['content'] = self._normalize_text_content(content)
+            
+            # Normalize two_column content
+            if slide_type == 'two_column':
+                if 'left_content' in slide and isinstance(slide['left_content'], str):
+                    slide['left_content'] = self._normalize_text_content(slide['left_content'])
+                if 'right_content' in slide and isinstance(slide['right_content'], str):
+                    slide['right_content'] = self._normalize_text_content(slide['right_content'])
+            
+            # Normalize three_column content
+            if slide_type == 'three_column':
+                if 'left_content' in slide and isinstance(slide['left_content'], str):
+                    slide['left_content'] = self._normalize_text_content(slide['left_content'])
+                if 'middle_content' in slide and isinstance(slide['middle_content'], str):
+                    slide['middle_content'] = self._normalize_text_content(slide['middle_content'])
+                if 'right_content' in slide and isinstance(slide['right_content'], str):
+                    slide['right_content'] = self._normalize_text_content(slide['right_content'])
+            
+            # Normalize title_white subtitle
+            if slide_type == 'title_white' and 'subtitle' in slide:
+                if isinstance(slide['subtitle'], str):
+                    # For subtitle, just ensure no blank lines in middle
+                    slide['subtitle'] = self._normalize_subtitle(slide['subtitle'])
+        
+        return spec
+    
+    def _normalize_text_content(self, content):
+        """Normalize text content according to rules."""
+        if not content:
+            return content
+        
+        lines = content.split('\n')
+        normalized_lines = []
+        in_bullet_block = False
+        last_was_bullet = False
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # Skip completely empty lines (they break bullet blocks)
+            if not stripped:
+                # Only add blank line if we're not in a bullet block
+                if not in_bullet_block:
+                    normalized_lines.append('')
+                continue
+            
+            # Check if line looks like a bullet (starts with •, -, *, or number)
+            is_bullet = stripped.startswith('•') or \
+                       stripped.startswith('-') or \
+                       stripped.startswith('*') or \
+                       re.match(r'^\d+[\.\)]\s', stripped)
+            
+            # Check if line looks like a heading (ends with :, no bullet, capitalized)
+            is_heading = not is_bullet and stripped.endswith(':') and len(stripped) < 50
+            
+            if is_bullet:
+                in_bullet_block = True
+                last_was_bullet = True
+                # Ensure it starts with •
+                if not stripped.startswith('•'):
+                    # Convert other bullet types to •
+                    if stripped.startswith('-') or stripped.startswith('*'):
+                        stripped = '•' + stripped[1:].strip()
+                    elif re.match(r'^\d+[\.\)]\s', stripped):
+                        # Keep numbered items as-is but ensure bullet format
+                        pass
+                    else:
+                        # Add bullet if missing
+                        stripped = '• ' + stripped
+                normalized_lines.append(stripped)
+            elif is_heading and in_bullet_block:
+                # Convert heading to bullet text
+                normalized_lines.append('• ' + stripped)
+                last_was_bullet = True
+            elif is_heading and not in_bullet_block:
+                # Heading outside bullet block - convert to bullet
+                normalized_lines.append('• ' + stripped)
+                in_bullet_block = True
+                last_was_bullet = True
+            else:
+                # Regular text line
+                if in_bullet_block and last_was_bullet:
+                    # If we're in a bullet block, this might be continuation
+                    # Check if it should be a bullet
+                    if len(stripped) < 100 and not stripped.startswith('•'):
+                        # Likely should be a bullet
+                        normalized_lines.append('• ' + stripped)
+                    else:
+                        # Long line, might be continuation - end bullet block
+                        in_bullet_block = False
+                        normalized_lines.append('')
+                        normalized_lines.append(stripped)
+                else:
+                    normalized_lines.append(stripped)
+                last_was_bullet = False
+        
+        return '\n'.join(normalized_lines)
+    
+    def _normalize_subtitle(self, subtitle):
+        """Normalize subtitle - remove blank lines in middle."""
+        lines = subtitle.split('\n')
+        normalized = []
+        for line in lines:
+            if line.strip() or not normalized or normalized[-1].strip():
+                normalized.append(line)
+        return '\n'.join(normalized)
+    
     def generate(self, content_spec_path, output_path):
         """Generate presentation from content specification."""
         # Load content spec
         with open(content_spec_path) as f:
             spec = yaml.safe_load(f)
+        
+        # Normalize content before generation
+        spec = self._normalize_content(spec)
         
         # Clear template slides (keep only master)
         while len(self.prs.slides) > 0:
@@ -142,8 +275,23 @@ class HyFluxPPTGenerator:
     
     def _add_slide(self, slide_spec):
         """Add a single slide based on specification."""
-        # Get layout
+        # Get layout - normalize type name
         layout_type = slide_spec.get('type', 'title_only')
+        layout_type_lower = layout_type.lower()
+        
+        # Map alternative type names
+        type_mapping = {
+            'title': 'title_white',
+            'two_content': 'two_column',
+            'three_content': 'three_column',
+        }
+        if layout_type_lower in type_mapping:
+            layout_type = type_mapping[layout_type_lower]
+        elif layout_type.isupper():
+            layout_type = layout_type.lower()
+            if layout_type in type_mapping:
+                layout_type = type_mapping[layout_type]
+        
         layout_idx = LAYOUT_MAP.get(layout_type, 12)
         
         if layout_idx >= len(self.prs.slide_layouts):
@@ -153,13 +301,13 @@ class HyFluxPPTGenerator:
         slide = self.prs.slides.add_slide(self.prs.slide_layouts[layout_idx])
         
         # Populate content based on layout type
-        if layout_type in ['title_white', 'title_reverse']:
+        if layout_type in ['title_white', 'title_reverse', 'title']:
             self._populate_title_slide(slide, slide_spec)
         elif layout_type == 'divider':
             self._populate_divider(slide, slide_spec)
         elif layout_type == 'text_only':
             self._populate_text_only(slide, slide_spec)
-        elif layout_type in ['two_column', 'three_column']:
+        elif layout_type in ['two_column', 'two_content', 'three_column', 'three_content']:
             self._populate_columns(slide, slide_spec)
         elif layout_type == 'quote':
             self._populate_quote(slide, slide_spec)
@@ -177,10 +325,21 @@ class HyFluxPPTGenerator:
         if hasattr(slide.shapes, 'title') and slide.shapes.title is not None and 'title' in spec:
             slide.shapes.title.text = spec['title']
         
+        # Handle content - can be array or string
+        content_text = ''
+        if 'content' in spec:
+            content = spec['content']
+            if isinstance(content, list):
+                content_text = '\n'.join(str(item) for item in content)
+            elif isinstance(content, str):
+                content_text = content
+        elif 'subtitle' in spec:
+            content_text = spec['subtitle']
+        
         # Find subtitle placeholder (usually index 1)
         for shape in slide.shapes:
             if hasattr(shape, 'placeholder_format') and shape.placeholder_format.idx == 1:
-                shape.text = spec.get('subtitle', '')
+                shape.text = content_text
                 break
     
     def _populate_divider(self, slide, spec):
@@ -193,11 +352,22 @@ class HyFluxPPTGenerator:
         if hasattr(slide.shapes, 'title') and slide.shapes.title is not None and 'title' in spec:
             slide.shapes.title.text = spec['title']
         
+        # Handle content - can be array or string
+        content_text = ''
+        if 'content' in spec:
+            content = spec['content']
+            if isinstance(content, list):
+                content_text = self._format_content_list(content)
+            elif isinstance(content, str):
+                content_text = content
+            else:
+                content_text = str(content)
+        
         # Find content text box
         for shape in slide.shapes:
             if hasattr(shape, 'has_text_frame') and shape.has_text_frame:
                 if hasattr(shape, 'placeholder_format') and shape.placeholder_format.idx > 0:
-                    self._set_text_content(shape.text_frame, spec.get('content', ''))
+                    self._set_text_content(shape.text_frame, content_text)
                     break
     
     def _populate_columns(self, slide, spec):
@@ -205,11 +375,32 @@ class HyFluxPPTGenerator:
         if hasattr(slide.shapes, 'title') and slide.shapes.title is not None and 'title' in spec:
             slide.shapes.title.text = spec['title']
         
-        # Find column placeholders and populate
-        columns = [spec.get('left_content', ''), 
-                  spec.get('right_content', ''),
-                  spec.get('middle_content', '')]
+        # Handle different content structures
+        columns = []
         
+        # Check for nested content structure (content.left, content.right, etc.)
+        if 'content' in spec and isinstance(spec['content'], dict):
+            content_dict = spec['content']
+            # Extract left, right, middle content
+            left_content = content_dict.get('left', [])
+            right_content = content_dict.get('right', [])
+            middle_content = content_dict.get('middle', [])
+            
+            # Convert lists to strings
+            columns = [
+                self._format_content_list(left_content),
+                self._format_content_list(right_content),
+                self._format_content_list(middle_content)
+            ]
+        else:
+            # Use traditional format (left_content, right_content, middle_content)
+            columns = [
+                spec.get('left_content', ''),
+                spec.get('right_content', ''),
+                spec.get('middle_content', '')
+            ]
+        
+        # Populate columns
         col_idx = 0
         for shape in slide.shapes:
             if hasattr(shape, 'has_text_frame') and shape.has_text_frame:
@@ -217,6 +408,36 @@ class HyFluxPPTGenerator:
                     if col_idx < len(columns) and columns[col_idx]:
                         self._set_text_content(shape.text_frame, columns[col_idx])
                     col_idx += 1
+                    if col_idx >= len(columns):
+                        break
+    
+    def _format_content_list(self, content):
+        """Format content list or object into text string."""
+        if not content:
+            return ''
+        
+        if isinstance(content, list):
+            # Handle list of strings or objects
+            lines = []
+            for item in content:
+                if isinstance(item, dict):
+                    # Handle objects with image/chart/caption
+                    if 'image' in item:
+                        lines.append(f"[Image: {item.get('image', '')}]")
+                        if 'caption' in item:
+                            lines.append(item['caption'])
+                    elif 'chart' in item:
+                        lines.append(f"[Chart: {item.get('chart', '')}]")
+                    else:
+                        # Just add the text representation
+                        lines.append(str(item))
+                else:
+                    lines.append(str(item))
+            return '\n'.join(lines)
+        elif isinstance(content, str):
+            return content
+        else:
+            return str(content)
     
     def _populate_quote(self, slide, spec):
         """Populate quote slide."""
