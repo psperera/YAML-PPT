@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyFlux PPT Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-file-powerpoint"></i> HyFlux PowerPoint Generator</h1>
+            <p class="subtitle">Create professional presentations from YAML specifications</p>
+        </header>
+
+        <div class="main-content">
+            <div class="editor-panel">
+                <div class="toolbar">
+                    <button id="loadTemplate" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> Load Template
+                    </button>
+                    <button id="uploadFile" class="btn btn-secondary">
+                        <i class="fas fa-upload"></i> Upload YAML
+                    </button>
+                    <input type="file" id="fileInput" accept=".yaml,.yml" style="display: none;">
+                    <button id="validateBtn" class="btn btn-info">
+                        <i class="fas fa-check-circle"></i> Validate
+                    </button>
+                    <button id="generateBtn" class="btn btn-success">
+                        <i class="fas fa-magic"></i> Generate PPT
+                    </button>
+                    <button id="downloadBtn" class="btn btn-download" style="display: none;">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+
+                <div class="editor-container">
+                    <textarea id="yamlEditor" placeholder="YAML content will appear here..."></textarea>
+                </div>
+
+                <div id="statusBar" class="status-bar"></div>
+            </div>
+
+            <div class="info-panel">
+                <!-- Chat Interface -->
+                <div class="chat-card">
+                    <div class="chat-header">
+                        <h3><i class="fas fa-robot"></i> AI Assistant (Ollama)</h3>
+                        <select id="modelSelect" class="model-select">
+                            <option value="llama3.2">llama3.2</option>
+                            <option value="gemma2">gemma2</option>
+                            <option value="mistral">mistral</option>
+                        </select>
+                    </div>
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="chat-message bot-message">
+                            <div class="message-content">
+                                <i class="fas fa-robot"></i>
+                                <p>Hello! I'm your AI assistant. I can help you create YAML content for your presentations, fix syntax errors, or suggest slide structures. How can I help?</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Ask me anything about creating presentations..." />
+                        <button id="sendChatBtn" class="btn btn-primary chat-send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div id="chatStatus" class="chat-status"></div>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Quick Start</h3>
+                    <ol>
+                        <li>Click <strong>Load Template</strong> to start with a sample</li>
+                        <li>Edit the YAML content in the editor</li>
+                        <li>Click <strong>Validate</strong> to check your YAML</li>
+                        <li>Click <strong>Generate PPT</strong> to create your presentation</li>
+                        <li>Download the generated PowerPoint file</li>
+                    </ol>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-list"></i> Available Slide Types</h3>
+                    <ul class="slide-types">
+                        <li><code>title_white</code> - White title slide</li>
+                        <li><code>title_reverse</code> - Reverse title slide</li>
+                        <li><code>divider</code> - Section divider</li>
+                        <li><code>text_only</code> - Text content slide</li>
+                        <li><code>title_only</code> - Title only (for charts)</li>
+                        <li><code>two_column</code> - Two column layout</li>
+                        <li><code>three_column</code> - Three column layout</li>
+                        <li><code>quote</code> - Quote slide</li>
+                        <li><code>end_slide</code> - Closing slide</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-lightbulb"></i> Tips</h3>
+                    <ul>
+                        <li>Use <code>|</code> for multi-line text content</li>
+                        <li>YAML is case-sensitive and indentation matters</li>
+                        <li>Always validate before generating</li>
+                        <li>Check the console for detailed error messages</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
+

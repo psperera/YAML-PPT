@@ -1,0 +1,10 @@
+presentation:
+  title: "Test Presentation"
+  
+slides:
+  - type: title_white
+    title: "Test Slide"
+    subtitle: "Validation Test"
+  
+  - type: end_slide
+    title: "Test Complete"

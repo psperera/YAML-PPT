@@ -1,0 +1,16 @@
+# HyFlux PPT Automation Configuration
+
+font_name: 'Outfit'
+font_sizes:
+  title: 24
+  heading: 20
+  body: 14
+  caption: 12
+
+validation:
+  max_slides: 100
+  max_file_size_mb: 50
+  
+output:
+  default_path: 'output/generated'
+  name_pattern: '%Y-%m-%d_{project}_v{version}.pptx'

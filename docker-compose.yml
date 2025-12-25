@@ -1,0 +1,26 @@
+services:
+  hyflux-webapp:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    container_name: hyflux-ppt-generator
+    ports:
+      - "5001:5000"
+    volumes:
+      # Mount PowerPoint template directory (separate from Flask templates)
+      - ./hyflux-ppt-automation/templates:/app/ppt_templates:ro
+      # Mount input directory for sample YAML
+      - ./hyflux-ppt-automation/input:/app/input:ro
+      # Mount output directory to persist generated files
+      - ./hyflux-ppt-automation/output/generated:/app/output
+      # Mount uploads directory
+      - ./hyflux-ppt-automation/output/uploads:/app/uploads
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+

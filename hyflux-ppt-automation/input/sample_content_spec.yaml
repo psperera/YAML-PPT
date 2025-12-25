@@ -1,0 +1,118 @@
+# HyFlux Presentation Content Specification
+# This YAML file defines your presentation structure
+
+presentation:
+  title: "Q4 2025 Business Review"
+  author: "HyFlux Ltd"
+  date: "2025-12-25"
+
+slides:
+  # Opening title slide
+  - type: title_white
+    title: "Q4 2025 Business Review"
+    subtitle: "Driving Innovation in Water Solutions"
+  
+  # Section divider
+  - type: divider
+    title: "Executive Summary"
+  
+  # Text-heavy content slide
+  - type: text_only
+    title: "Key Achievements This Quarter"
+    content: |
+      Revenue & Growth
+      • Achieved $45M in quarterly revenue (23% YoY growth)
+      • Expanded customer base to 150+ enterprise clients
+      • Maintained 94% customer satisfaction score
+      
+      Innovation & Technology
+      • Launched HyFlux Pro 3.0 platform
+      • Reduced processing time by 40%
+      • Filed 3 new patents in filtration technology
+      
+      Market Expansion
+      • Entered Southeast Asian markets
+      • Established partnerships with 5 regional distributors
+      • Opened new R&D facility in Singapore
+  
+  # Two-column comparison
+  - type: two_column
+    title: "Market Performance: Domestic vs International"
+    left_content: |
+      Domestic Market
+      • Consistent growth at 15% YoY
+      • Strong retention in industrial sector
+      • Government contracts: $12M
+      • Focus: Reliability & service
+    right_content: |
+      International Market
+      • Rapid expansion at 31% YoY
+      • Emerging markets showing promise
+      • New partnerships: $18M potential
+      • Focus: Localization & scale
+  
+  # Another section break
+  - type: divider
+    title: "Product Innovation"
+  
+  # Three-column layout
+  - type: three_column
+    title: "New Product Features"
+    left_content: |
+      HyFlux Pro 3.0
+      • AI-powered optimization
+      • 40% faster processing
+      • Cloud integration
+    middle_content: |
+      Mobile App
+      • Real-time monitoring
+      • Predictive maintenance
+      • Remote diagnostics
+    right_content: |
+      Analytics Suite
+      • Custom dashboards
+      • ROI tracking
+      • Compliance reporting
+  
+  # Customer quote
+  - type: quote
+    quote: "HyFlux solutions have transformed our water management capabilities. The ROI exceeded our expectations within 6 months."
+    attribution: "Sarah Chen, COO - Pacific Industries"
+  
+  # Title only (for chart/image)
+  - type: title_only
+    title: "Revenue Growth Trajectory"
+    # Note: Insert chart/image manually or via additional automation
+  
+  # Text slide
+  - type: text_only
+    title: "Looking Ahead: 2026 Strategic Priorities"
+    content: |
+      Expansion Goals
+      • Target $200M annual revenue
+      • Enter 3 additional markets (Europe, Middle East, South America)
+      • Double R&D investment
+      
+      Technology Roadmap
+      • Launch HyFlux Enterprise 4.0
+      • Integrate IoT sensor network
+      • Develop predictive AI models
+      
+      Sustainability Commitment
+      • Achieve carbon-neutral operations
+      • Reduce water waste by 50%
+      • Partner with environmental NGOs
+  
+  # Closing slide
+  - type: end_slide
+    title: "Thank You"
+    contact: |
+      Questions?
+      info@hyflux.com
+      www.hyflux.com
+
+# Generation notes:
+# - All slides use Outfit font family
+# - Standard HyFlux branding applied automatically
+# - Modify this YAML file to change content
+# - Run: python3 ppt_generator.py sample_content.yaml output/presentation.pptx
