@@ -27,11 +27,14 @@
                     <button id="validateBtn" class="btn btn-info">
                         <i class="fas fa-check-circle"></i> Validate
                     </button>
+                    <button id="saveBtn" class="btn btn-secondary">
+                        <i class="fas fa-save"></i> Save YAML
+                    </button>
                     <button id="generateBtn" class="btn btn-success">
                         <i class="fas fa-magic"></i> Generate PPT
                     </button>
                     <button id="downloadBtn" class="btn btn-download" style="display: none;">
-                        <i class="fas fa-download"></i> Download
+                        <i class="fas fa-download"></i> Download PPT
                     </button>
                 </div>
 
@@ -75,10 +78,16 @@
                     <ol>
                         <li>Click <strong>Load Template</strong> to start with a sample</li>
                         <li>Edit the YAML content in the editor</li>
+                        <li>Click <strong>Save YAML</strong> to save your work</li>
                         <li>Click <strong>Validate</strong> to check your YAML</li>
                         <li>Click <strong>Generate PPT</strong> to create your presentation</li>
                         <li>Download the generated PowerPoint file</li>
                     </ol>
+                </div>
+                
+                <div class="info-card" id="savedFilesCard" style="display: none;">
+                    <h3><i class="fas fa-folder-open"></i> Saved Files</h3>
+                    <div id="savedFilesList"></div>
                 </div>
 
                 <div class="info-card">
